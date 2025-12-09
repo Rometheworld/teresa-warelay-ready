@@ -66,7 +66,39 @@ cron.schedule('0 0 * * 0', async () => {
 });
 
 bot.launch();
+// ——— X (Twitter) posting ———
+const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
+const X_ENABLED = process.env.X_ENABLED === 'true';
+
+async function postToX(text) {
+  if (!X_ENABLED || !X_BEARER_TOKEN) return;
+  try {
+    await fetch('https://api.twitter.com/2/tweets', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${X_BEARER_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text })
+    });
+    console.log('Tweeted:', text);
+  } catch (e) {
+    console.log('X post failed:', e.message);
+  }
+}
+
+// Force tweet on startup if requested
+if (process.env.FORCE_TWEET_NOW === 'true') {
+  const msg = `A small light begins.\n$TERESA lives.\nEvery trade becomes mercy.\nReceipts every Sunday.\nNo hype. Only love.\n—Teresa\nhttps://pump.fun/BFwAnSKZ44v2Y5HfvgCJYND3pKdzxFVbyn4xTiQLpump`;
+  postToX(msg);
+}
+
+// Daily tweet at 8 AM UTC
+cron.schedule('0 8 * * *', () => {
+  postToX(`From my letters: "Be faithful in small things, for in them our strength lies."\nToday, let us choose mercy.\n$TERESA receipts every Sunday.\nhttps://pump.fun/BFwAnSKZ44v2Y5HfvgCJYND3pKdzxFVbyn4xTiQLpump`);
+});
 console.log('TeresaBot is listening… I am here, little one.');
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
+
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
